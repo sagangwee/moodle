@@ -1,11 +1,10 @@
 <?php
-defined('MOODLE_INTERNAL') || die();
+// defined('MOODLE_INTERNAL') || die();
 
 $functions = [
     'local_wscreateassign_create_assign' => [
-        'classname' => 'local_wscreateassign_external',
-        'methodname' => 'create_assign',
-        'classpath' => 'local/wscreateassign/externallib.php',
+        'classname' => 'local_wscreateassign\external\create_assign',
+        'methodname' => 'execute',
         'description' => 'Create a new assignment.',
         'type' => 'write',
         'capabilities' => 'moodle/course:manageactivities',
@@ -20,10 +19,10 @@ $functions = [
     ],
 ];
 
-$services = [
-    'wscreateassign' => [
-        'functions' => ['local_wscreateassign_create_assign'],
-        'restrictedusers' => 0,
-        'enabled' => 1,
-    ],
-];
+// $services = [
+//     'wscreateassign' => [
+//         'functions' => ['local_wscreateassign_create_assign'],
+//         'restrictedusers' => 0,
+//         'enabled' => 1,
+//     ],
+// ];
