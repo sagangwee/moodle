@@ -16,11 +16,12 @@ class create_assign extends external_api {
                 'courseid' => new external_value(PARAM_INT, 'Course ID'),
                 'name' => new external_value(PARAM_TEXT, 'Assignment name'),
                 'intro' => new external_value(PARAM_RAW, 'Assignment introduction'),
+                'restrictedstudentemail' => new external_value(PARAM_EMAIL, 'Student email to restrict access to', VALUE_DEFAULT, ''),
             ]
         );
     }
 
-    public static function execute($courseid, $name, $intro) {
+    public static function execute($courseid, $name, $intro, $restrictedstudentemail = '') {
         global $CFG;
         require_once($CFG->dirroot . '/course/modlib.php');
         
@@ -65,6 +66,22 @@ class create_assign extends external_api {
         $moduleinfo->blindmarking = 0;
         $moduleinfo->markingworkflow = 0;
         $moduleinfo->markingallocation = 0;
+
+        // Set up availability restriction by email if provided
+        if (!empty($restrictedstudentemail)) {
+            $moduleinfo->availability = json_encode([
+                'op' => '&',
+                'c' => [
+                    [
+                        'type' => 'profile',
+                        'sf' => 'email',
+                        'op' => 'contains',
+                        'v' => $restrictedstudentemail
+                    ]
+                ],
+                'showc' => [true]
+            ]);
+        }
         
         // Create the module and instance
         $moduleinfo = add_moduleinfo($moduleinfo, $course);
