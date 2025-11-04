@@ -22,30 +22,37 @@ class create_assign extends external_api {
                     VALUE_DEFAULT,
                     []
                 ),
+                'sectionnumber' => new external_value(PARAM_INT, 'Section number within the course', VALUE_DEFAULT, 0),
             ]
         );
     }
 
-    public static function execute($courseid, $name, $intro, $restrictedstudentemails = []) {
+    public static function execute($courseid, $name, $intro, $restrictedstudentemails = [], $sectionnumber = 0) {
         global $CFG;
         require_once($CFG->dirroot . '/course/modlib.php');
         
-        self::validate_parameters(self::execute_parameters(), ['courseid' => $courseid, 'name' => $name, 'intro' => $intro]);
+        self::validate_parameters(self::execute_parameters(), ['courseid' => $courseid, 'name' => $name, 'intro' => $intro, 'restrictedstudentemails' => $restrictedstudentemails, 'sectionnumber' => $sectionnumber]);
 
         $context = context\course::instance($courseid, IGNORE_MISSING);
         self::validate_context($context);
 
         $course = get_course($courseid);
         
-        // Prepare defaults for a new assign module in section 0
-        list($module, $context, $cw, $cm, $moduleinfo) = prepare_new_moduleinfo_data($course, 'assign', 0);
+        // Ensure section is an integer and non-negative
+        $sectionnumber = (int)$sectionnumber;
+        if ($sectionnumber < 0) {
+            $sectionnumber = 0;
+        }
+
+        // Prepare defaults for a new assign module in the requested section
+        list($module, $context, $cw, $cm, $moduleinfo) = prepare_new_moduleinfo_data($course, 'assign', $sectionnumber);
 
         // Fill moduleinfo fields
         $moduleinfo->modulename = 'assign';
         $moduleinfo->name = $name;
         $moduleinfo->introeditor = ['text' => $intro, 'format' => FORMAT_HTML, 'itemid' => file_get_submitted_draft_itemid('introeditor')];
         $moduleinfo->visible = 1;
-        $moduleinfo->section = 0;
+        $moduleinfo->section = $sectionnumber;
         
         // Add default assignment settings
         $moduleinfo->assignsubmission_onlinetext_enabled = 1;
