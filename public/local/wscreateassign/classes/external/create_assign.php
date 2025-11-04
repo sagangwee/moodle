@@ -16,12 +16,17 @@ class create_assign extends external_api {
                 'courseid' => new external_value(PARAM_INT, 'Course ID'),
                 'name' => new external_value(PARAM_TEXT, 'Assignment name'),
                 'intro' => new external_value(PARAM_RAW, 'Assignment introduction'),
-                'restrictedstudentemail' => new external_value(PARAM_EMAIL, 'Student email to restrict access to', VALUE_DEFAULT, ''),
+                'restrictedstudentemails' => new external_multiple_structure(
+                    new external_value(PARAM_EMAIL, 'Student email'),
+                    'List of student emails to restrict access to',
+                    VALUE_DEFAULT,
+                    []
+                ),
             ]
         );
     }
 
-    public static function execute($courseid, $name, $intro, $restrictedstudentemail = '') {
+    public static function execute($courseid, $name, $intro, $restrictedstudentemails = []) {
         global $CFG;
         require_once($CFG->dirroot . '/course/modlib.php');
         
@@ -68,21 +73,23 @@ class create_assign extends external_api {
         $moduleinfo->markingallocation = 0;
 
         // Set up availability restriction by email if provided
-        if (!empty($restrictedstudentemail)) {
+        if (!empty($restrictedstudentemails)) {
+            $conditions = [];
+            foreach ($restrictedstudentemails as $email) {
+                $conditions[] = [
+                    'type' => 'profile',
+                    'sf' => 'email',
+                    'op' => 'contains',
+                    'v' => $email
+                ];
+            }
+            
             $moduleinfo->availability = json_encode([
-                'op' => '&',
-                'c' => [
-                    [
-                        'type' => 'profile',
-                        'sf' => 'email',
-                        'op' => 'contains',
-                        'v' => $restrictedstudentemail
-                    ]
-                ],
-                'showc' => [true]
+                'op' => '|',  // OR operator to match any of the emails
+                'c' => $conditions,
+                'show' => true
             ]);
         }
-        
         // Create the module and instance
         $moduleinfo = add_moduleinfo($moduleinfo, $course);
         
